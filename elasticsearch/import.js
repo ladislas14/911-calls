@@ -18,24 +18,112 @@ async function run() {
   await client.indices.create({
     index: INDEX_NAME,
     body : {
-      // TODO configurer l'index https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html
+      mappings: {
+        properties: {
+          location: {type: "geo_point"},
+          desc: {
+            type: "text", 
+            fields : {
+              keyword : {
+                type : "keyword",
+                ignore_above : 256
+              }
+            }
+          },
+          zip: {
+            type: "text", 
+            fields : {
+              keyword : {
+                type : "keyword",
+                ignore_above : 256
+              }
+            }
+          },
+          title: {
+            type: "text", 
+            fields : {
+              keyword : {
+                type : "keyword",
+                ignore_above : 256
+              }
+            }
+          },
+          timeStamp: {type: "date"},
+          twp: {
+            type: "text", 
+            fields : {
+              keyword : {
+                type : "keyword",
+                ignore_above : 256
+              }
+            }
+          },
+          addr: {
+            type: "text", 
+            fields : {
+              keyword : {
+                type : "keyword",
+                ignore_above : 256
+              }
+            }
+          },
+          category: {
+            type: "text", 
+            fields : {
+              keyword : {
+                type : "keyword",
+                ignore_above : 256
+              }
+            }
+          }
+        }
+      }
     }
   });
+
+  let calls = [];
 
   fs.createReadStream('../911.csv')
     .pipe(csv())
     .on('data', data => {
       const call = { 
+        location: {
+          lat: data.lat,
+          lon: data.lng
+        },
+        desc: data.desc,
+        zip: data.zip,
+        title: data.title,
+        timeStamp: new Date(data.timeStamp).toISOString(),
+        twp: data.twp,
+        addr: data.addr,
+        category: data.title.split(':')[0]
       };
-      // TODO créer l'objet call à partir de la ligne
+      calls.push(call)
     })
     .on('end', async () => {
-      // TODO insérer les données dans ES en utilisant l'API de bulk https://www.elastic.co/guide/en/elasticsearch/reference/7.x/docs-bulk.html
+      client.bulk(createBulkInsertQuery(calls), (err, resp) => {
+        if (err) console.trace(err.message);
+        else console.log(`Inserted ${resp.body.items.length} calls 🔥`);
+        client.close();
+      });
     });
   
 
 }
 
-run().catch(console.log);
+function createBulkInsertQuery(calls) {
+  const body = calls.reduce((acc, call) => {
+    acc.push({ index: { _index: INDEX_NAME, _type: '_doc'} })
+    acc.push({...call})
+    return acc
+  }, []);
+
+  return { body };
+}
+
+run().catch((e) => {
+  console.log(JSON.stringify(e))
+});
 
 
