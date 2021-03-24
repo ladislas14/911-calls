@@ -21,6 +21,16 @@ const insertCalls = async function (db, callback) {
     .on('data', data => {
 
       const call = {
+        "loc": {
+          "type": "Point",
+          "coordinates": [parseFloat(data.lng), parseFloat(data.lat)]},
+        "desc": data.desc,
+        "zip": data.zip,
+        "title": data.title,
+        "timeStamp":data.timeStamp,
+        "twp": data.twp,
+        "addr": data.addr,
+        "e": data.e
       }; // TODO créer l'objet call à partir de la ligne
 
       calls.push(call);

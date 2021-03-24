@@ -34,6 +34,39 @@ Afin de répondre aux différents problèmes, vous allez avoir besoin de créer 
 ```
 TODO : ajouter les requêtes MongoDB ici
 ```
+QUESTION 1 :
+db.calls.find({"title":/EMS/}).count()
+db.calls.find({"title":/Fire/}).count()
+db.calls.find({"title":/Traffic/}).count()
+
+QUESTION 2 :
+db.calls.aggregate([
+  { $sortByCount: { $dateToString : { "format": "%Y-%m", "date": { $toDate: "$timeStamp" }}} },
+  { $limit: 3 }
+])
+
+QUESTION 3 :
+db.calls.aggregate([
+  { $match: { "title": /OVERDOSE/ } },
+  { $group: { _id: "$twp", total: { $sum:1} }},
+  { $sort: { total: -1 }},
+  { $limit: 3 }
+])
+
+QUESTION 4 :
+Index creation :
+db.calls.createIndex({ loc: "2dsphere" });
+
+Query:
+db.calls.find({
+  loc: { 
+    $near: {
+      $geometry: { type: "Point",  coordinates: [ -75.283783, 40.241493 ] },
+      $maxDistance: 500
+    }
+  }
+}).count()
+
 
 Vous allez sûrement avoir besoin de vous inspirer des points suivants de la documentation :
 
